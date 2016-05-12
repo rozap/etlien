@@ -81,24 +81,6 @@ defmodule Etlien.Transform.Applicator do
 
       err -> err
     end
-        # IO.inspect upstream_expr
-        # struct()
-
-
-        # {func, _} = Code.eval_quoted(expr)
-
-        # {_, out_header, transformed, errors} = Enum.reduce(
-        #   t.chunk, 
-        #   {t.header, nil, [], []}, 
-        #   fn row, {in_header, out_header, transformed, errors} ->
-        #     case func.(in_header, row) do
-        #       {:ok, new_header, new_row} ->
-        #         {in_header, new_header, [new_row | transformed], errors}
-        #       {:error, reason} ->
-        #         Logger.warn(reason)
-        #         {in_header, out_header, transformed, [reason | errors]}
-        #     end
-        # end)
   end
 
   defp apply_expr(@identity, {header, chunk}) do

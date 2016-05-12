@@ -41,6 +41,30 @@ defmodule ApplicatorTest do
   end
 
 
+  test "can return an error for a missing base case in a wrapped expr" do
+    expr = Applicator.identity
+    header = ["az", "bz", "cz"]
+    chunk = [["aa", "bb", "cc"]]
+
+    t = %Transformed{
+      expr: Applicator.identity, 
+      original_header: header,
+      original_chunk_hash: Persist.chunk_hash(chunk),
+      result_header: header, 
+      result_chunk: chunk
+    }
+
+    wrapped_expr = Applicator.wrap(
+      expr, 
+      quote do: {true, fn header, row -> 
+        {:ok, header |> Enum.reverse, row |> Enum.reverse} 
+      end}
+    )
+
+    res = Applicator.apply_to_chunk(wrapped_expr, {header, chunk})
+    assert res == {:error, :not_found}
+  end
+
   test "can wrap the identity function" do
     expr = Applicator.identity
     header = ["a", "b", "c"]
@@ -61,7 +85,6 @@ defmodule ApplicatorTest do
         {:ok, header |> Enum.reverse, row |> Enum.reverse} 
       end}
     )
-    t = struct(t, func: wrapped_expr)
 
     {:ok, %Transformed{
       result_chunk: result_chunk,
