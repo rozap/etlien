@@ -11,8 +11,9 @@ defmodule Etlien do
       supervisor(Etlien.Endpoint, []),
       # Start the Ecto repository
       supervisor(Etlien.Repo, []),
+
       # Here you could define other workers and supervisors as children
-      # worker(Etlien.Worker, [arg1, arg2, arg3]),
+      worker(Etlien.Transform.Reflog, []),
     ]
 
     # See http://elixir-lang.org/docs/stable/elixir/Supervisor.html

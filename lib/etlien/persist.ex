@@ -8,6 +8,44 @@ defmodule Etlien.Persist do
     Supervisor.start_link(__MODULE__, :ok, name: __MODULE__)
   end
 
+  def init(_) do
+    :pg2.delete(__MODULE__.Worker)
+    :pg2.create(__MODULE__.Worker)
+    count = Application.get_env(:etlien, :persist)[:count]
+    Enum.map(1..count, fn i ->
+      id = String.to_atom("persist_worker_#{i}")
+      worker(__MODULE__.Worker, [[id: id]], id: id)
+    end)
+    |> supervise(strategy: :one_for_one, name: __MODULE__)
+  end
+
+
+  def put(transformed) do
+    timeout = Application.get_env(:etlien, :persist)[:max_attempt_timeout]
+    Etlien.Nice.cast_for(
+      __MODULE__.Worker,
+      {:put, transformed, self},
+      timeout
+    )
+    receive do
+      {:put, result} -> result
+    after timeout -> {:error, :timeout}
+    end
+  end
+
+  def get(ref) do
+    timeout = Application.get_env(:etlien, :persist)[:max_attempt_timeout]
+    Etlien.Nice.cast_for(
+      __MODULE__.Worker,
+      {:get, ref, self},
+      timeout
+    )
+    receive do
+      {:get, result} -> result
+    after timeout -> {:error, :timeout}
+    end
+  end
+
   defp hash_term(term) do
     bin = :erlang.term_to_binary(term)
 
@@ -20,8 +58,8 @@ defmodule Etlien.Persist do
   end
 
 
-  def key(%Transformed{expr: {_, impl}, original_header: h, original_chunk_hash: hashed_chunk}) do
-    key({impl, h, hashed_chunk})
+  def key(%Transformed{expr: expr, original_header: h, original_chunk_hash: hashed_chunk}) do
+    key({expr, h, hashed_chunk})
   end
 
   def key({expr, header, chunk_h}) when is_binary(chunk_h) do
@@ -36,6 +74,7 @@ defmodule Etlien.Persist do
 
 
   defmodule Worker do
+    use Workex
     def start_link(args) do
       water_mark = Application.get_env(:etlien, :persist)[:water_mark]
       {:ok, pid} = Workex.start_link(__MODULE__, args, max_size: water_mark)
@@ -95,44 +134,6 @@ defmodule Etlien.Persist do
   end
 
 
-  def init(_) do
-    :pg2.delete(__MODULE__.Worker)
-    :pg2.create(__MODULE__.Worker)
-    count = Application.get_env(:etlien, :persist)[:count]
-    Enum.map(1..count, fn i ->
-      id = String.to_atom("persist_worker_#{i}")
-      worker(__MODULE__.Worker, [[id: id]], id: id)
-    end)
-    |> supervise(strategy: :one_for_one, name: __MODULE__)
-  end
-
-
-  def put(transformed) do
-    timeout = Application.get_env(:etlien, :persist)[:max_attempt_timeout]
-    Etlien.Nice.cast_for(
-      __MODULE__.Worker,
-      {:put, transformed, self},
-      timeout
-    )
-    receive do
-      {:put, result} -> result
-    after timeout -> {:error, :timeout}
-    end
-  end
-
-  def get(ref) do
-    timeout = Application.get_env(:etlien, :persist)[:max_attempt_timeout]
-    Etlien.Nice.cast_for(
-      __MODULE__.Worker,
-      {:get, ref, self},
-      timeout
-    )    
-    receive do
-      {:get, result} -> result
-    after timeout -> {:error, :timeout}
-    end
-    
-  end
 
 
 end

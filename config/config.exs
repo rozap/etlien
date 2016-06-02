@@ -31,8 +31,13 @@ config :phoenix, :generators,
 config :etlien, :persist,
   water_mark: 8,
   count: 1,
-  max_attempt_timeout: 1000,
+  max_attempt_timeout: 200,
   path: "/tmp/etlien"
+
+config :etlien, :set,
+  water_mark: 8,
+  count: 1,
+  max_attempt_timeout: 200
 
 config :etlien, :applicator,
   store_at_ms: 100

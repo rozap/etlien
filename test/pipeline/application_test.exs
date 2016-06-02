@@ -26,10 +26,10 @@ defmodule ApplicatorTest do
     chunk = [["a"], ["b"], ["c"]]
 
     t = %Transformed{
-      expr: expr, 
+      expr: expr,
       original_header: header,
       original_chunk_hash: Persist.chunk_hash(chunk),
-      result_header: header, 
+      result_header: header,
       result_chunk: chunk
     }
 
@@ -47,18 +47,18 @@ defmodule ApplicatorTest do
     chunk = [["aa", "bb", "cc"]]
 
     t = %Transformed{
-      expr: Applicator.identity, 
+      expr: Applicator.identity,
       original_header: header,
       original_chunk_hash: Persist.chunk_hash(chunk),
-      result_header: header, 
+      result_header: header,
       result_chunk: chunk
     }
 
     wrapped_expr = Applicator.wrap(
-      expr, 
-      quote do: {true, fn header, row -> 
-        {:ok, header |> Enum.reverse, row |> Enum.reverse} 
-      end}
+      expr,
+      quote do: fn header, row ->
+        {:ok, header |> Enum.reverse, row |> Enum.reverse}
+      end
     )
 
     res = Applicator.apply_to_chunk(wrapped_expr, {header, chunk})
@@ -71,19 +71,21 @@ defmodule ApplicatorTest do
     chunk = [["aa", "bb", "cc"]]
 
     t = %Transformed{
-      expr: Applicator.identity, 
+      expr: Applicator.identity,
       original_header: header,
       original_chunk_hash: Persist.chunk_hash(chunk),
-      result_header: header, 
+      result_header: header,
       result_chunk: chunk
     }
     {:ok, _} = Persist.put(t)
 
     wrapped_expr = Applicator.wrap(
-      expr, 
-      quote do: {true, fn header, row -> 
-        {:ok, header |> Enum.reverse, row |> Enum.reverse} 
-      end}
+      expr,
+      Applicator.pure(quote do
+        fn header, row ->
+          {:ok, header |> Enum.reverse, row |> Enum.reverse}
+        end
+      end)
     )
 
     {:ok, %Transformed{
@@ -97,15 +99,15 @@ defmodule ApplicatorTest do
 
   # test "can unwrap wrapped functions" do
   #   t = %Transform{
-  #     func: Applicator.identity, 
-  #     header: [[]], 
-  #     seq_num: 1, 
+  #     func: Applicator.identity,
+  #     header: [[]],
+  #     seq_num: 1,
   #     chunk: [[]]
   #   }
   #   {:ok, _} = Persist.put(t)
 
   #   t = struct(t, func: Applicator.wrap(
-  #     Applicator.identity, 
+  #     Applicator.identity,
   #     quote do: {true, fn header, row -> {:ok, header |> Enum.reverse, row |> Enum.reverse} end}
   #   ))
 
@@ -115,17 +117,17 @@ defmodule ApplicatorTest do
 
   # test "can apply by unwrapping nested transforms by retrieving it from Persist" do
   #   t = %Transform{
-  #     func: Applicator.identity, 
-  #     header: ["a_letter"], 
-  #     seq_num: 1, 
+  #     func: Applicator.identity,
+  #     header: ["a_letter"],
+  #     seq_num: 1,
   #     chunk: [["a"], ["b"], ["c"]]
   #   }
 
   #   {:ok, _} = Persist.put(t)
-    
+
   #   # Wrap it...
   #   t = struct(t, func: Applicator.wrap(
-  #     Applicator.identity, 
+  #     Applicator.identity,
   #     quote do: {true, fn header, row -> {:ok, header |> Enum.reverse, row |> Enum.reverse} end}
   #   ))
 

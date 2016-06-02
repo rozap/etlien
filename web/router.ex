@@ -19,8 +19,9 @@ defmodule Etlien.Router do
     get "/", PageController, :index
   end
 
-  # Other scopes may use custom stacks.
   # scope "/api", Etlien do
   #   pipe_through :api
+  #   post "/set/:set_id", Api.Set
   # end
+
 end

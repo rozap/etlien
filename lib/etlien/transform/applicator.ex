@@ -3,9 +3,17 @@ defmodule Etlien.Transform.Applicator do
   alias Etlien.Persist
   alias Etlien.Transformed
 
-  @identity (quote do: fn header, row -> {:ok, header, row} end)
+  @identity {:fn, [pure: true],
+    [{:->, [],
+     [[{:header, [], Elixir}, {:row, [], Elixir}],
+      {:{}, [], [:ok, {:header, [], Elixir}, {:row, [], Elixir}]}]}]}
 
-  def identity, do: {true, @identity}
+  def identity, do: @identity
+
+  def pure(func) do
+    {:fn, meta, args} = func
+    {:fn, [{:pure, true} | meta], args}
+  end
   ## This should be read only from persist store
 
   # Every transform looks like
@@ -15,13 +23,13 @@ defmodule Etlien.Transform.Applicator do
   #   fn header, row, a, b -> {:ok, "hello"} end = outer
   # would need to return
   #
-  # fn meta, header, row, a, b -> 
+  # fn meta, header, row, a, b ->
   #    case inner(row) do
   #      {:ok, result} -> outer(result)
   #      err -> err
   #    end
   # end
-  def wrap({inner_pure?, inner_expr}, {outer_pure?, outer_expr}) do
+  def wrap(inner_expr, outer_expr) do
     inner_application = {{:., [], [inner_expr]}, [],
      [{:header, [], Elixir}, {:row, [], Elixir}]}
 
@@ -29,15 +37,15 @@ defmodule Etlien.Transform.Applicator do
      [{:result_header, [], Elixir}, {:result_row, [], Elixir}]}
 
 
-    {inner_pure? && outer_pure?, {:fn, [],
+    {:fn, [],
      [{:->, [],
        [[{:header, [], Elixir}, {:row, [], Elixir}],
         {:case, [], [inner_application,
           [do: [
             {:->, [], [[{:{}, [],
-              [:ok, {:result_header, [], Elixir}, {:result_row, [], Elixir}]}], 
+              [:ok, {:result_header, [], Elixir}, {:result_row, [], Elixir}]}],
               outer_application]},
-            {:->, [], [[{:err, [], Elixir}], {:err, [], Elixir}]}]]]}]}]}}
+            {:->, [], [[{:err, [], Elixir}], {:err, [], Elixir}]}]]]}]}]}
   end
 
   def unwrap(outer) do
@@ -55,14 +63,19 @@ defmodule Etlien.Transform.Applicator do
 
 
   defp descend_expr(expr, datum) do
-    {upstream_expr, outer_expr} = unwrap(expr)
-    case apply_expr(upstream_expr, datum) do
+    {inner_expr, outer_expr} = unwrap(expr)
+
+
+    IO.puts "Inner #{Macro.to_string(inner_expr)}"
+    IO.puts "Outer #{Macro.to_string(outer_expr)}"
+
+    case apply_to_chunk(inner_expr, datum) do
       {:ok, %Transformed{result_header: header, result_chunk: chunk} = t} ->
         {outer_func, _} = Code.eval_quoted(outer_expr)
 
         {_, out_header, out_chunk, errors} = Enum.reduce(
-          chunk, 
-          {header, nil, [], []}, 
+          chunk,
+          {header, nil, [], []},
           fn row, {in_header, out_header, transformed, errors} ->
             case outer_func.(in_header, row) do
               {:ok, new_header, new_row} ->
@@ -88,11 +101,11 @@ defmodule Etlien.Transform.Applicator do
     |> Persist.get
   end
 
-  def apply_to_chunk({true, @identity}, datum) do
+  def apply_to_chunk(@identity, datum) do
     apply_expr(@identity, datum)
   end
 
-  def apply_to_chunk({true, expr}, {header, chunk} = datum) do
+  def apply_to_chunk(expr, {header, chunk} = datum) do
     existing = Persist.key({expr, header, chunk})
     |> Persist.get
 
