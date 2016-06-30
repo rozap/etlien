@@ -1,7 +1,7 @@
 defmodule Etlien.Transform.Applicator do
   require Logger
   alias Etlien.Persist
-  alias Etlien.Transformed
+  alias Etlien.Transform.Transformation
 
   @identity {:fn, [pure: true],
     [{:->, [],
@@ -66,11 +66,11 @@ defmodule Etlien.Transform.Applicator do
     {inner_expr, outer_expr} = unwrap(expr)
 
 
-    IO.puts "Inner #{Macro.to_string(inner_expr)}"
-    IO.puts "Outer #{Macro.to_string(outer_expr)}"
+    # IO.puts "Inner #{Macro.to_string(inner_expr)}"
+    # IO.puts "Outer #{Macro.to_string(outer_expr)}"
 
     case apply_to_chunk(inner_expr, datum) do
-      {:ok, %Transformed{result_header: header, result_chunk: chunk} = t} ->
+      {:ok, %Transformation{result_header: header, result_chunk: chunk} = t} ->
         {outer_func, _} = Code.eval_quoted(outer_expr)
 
         {_, out_header, out_chunk, errors} = Enum.reduce(

@@ -1,6 +1,11 @@
 ExUnit.start
 
-Mix.Task.run "ecto.create", ~w(-r Etlien.Repo --quiet)
-Mix.Task.run "ecto.migrate", ~w(-r Etlien.Repo --quiet)
-Ecto.Adapters.SQL.begin_test_transaction(Etlien.Repo)
+Ecto.Adapters.SQL.Sandbox.mode(Etlien.Repo, :manual)
 
+defmodule TestHelper do
+  def fixture!(name) do
+    __DIR__
+    |> Path.join(["fixtures", name])
+    |> File.stream!([:read], 256)
+  end
+end

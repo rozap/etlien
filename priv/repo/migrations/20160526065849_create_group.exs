@@ -6,7 +6,6 @@ defmodule Etlien.Repo.Migrations.CreateGroup do
       add :uuid, :uuid
       add :name, :string
       add :description, :string
-      add :schemas, :map
 
       timestamps
     end

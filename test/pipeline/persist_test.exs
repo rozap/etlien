@@ -1,7 +1,7 @@
 defmodule PersistTest do
   use ExUnit.Case, async: false
   alias Etlien.Persist
-  alias Etlien.Transformed
+  alias Etlien.Transform.Transformation
   alias Etlien.Transform.Applicator
 
   setup_all do
@@ -14,7 +14,7 @@ defmodule PersistTest do
     chunk = [["a chunk"]]
 
 
-    {:ok, ref} = %Transformed{
+    {:ok, ref} = %Transformation{
       expr: Applicator.identity,
       original_header: ["foo"],
       original_chunk_hash: Persist.chunk_hash(chunk),
@@ -24,7 +24,7 @@ defmodule PersistTest do
     |> Persist.put
 
     {:ok, item} = Persist.get(ref)
-    assert item == %Transformed{
+    assert item == %Transformation{
       expr: Applicator.identity,
       original_header: ["foo"],
       original_chunk_hash: Persist.chunk_hash(chunk),

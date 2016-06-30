@@ -1,17 +1,14 @@
-defmodule Etlien.Group do
+defmodule Etlien.Set do
   use Etlien.Web, :model
-  alias Etlien.Set
 
-  schema "groups" do
-    field :uuid, Ecto.UUID
-    field :name, :string
-    field :description, :string
-    field :resource_type, :string
-    has_many :sets, Set
+  schema "sets" do
+    field :columns, :map
+    belongs_to :group, Etlien.Group
+
     timestamps
   end
 
-  @required_fields ~w(uuid name description sets resource_type)
+  @required_fields ~w(columns)
   @optional_fields ~w()
 
   @doc """

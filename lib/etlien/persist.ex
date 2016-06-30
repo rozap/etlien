@@ -2,7 +2,7 @@ defmodule Etlien.Persist do
   use Supervisor
   require Logger
   alias Etlien.Transform.Applicator
-  alias Etlien.Transformed
+  alias Etlien.Transform.Transformation
 
   def start_link do
     Supervisor.start_link(__MODULE__, :ok, name: __MODULE__)
@@ -58,7 +58,7 @@ defmodule Etlien.Persist do
   end
 
 
-  def key(%Transformed{expr: expr, original_header: h, original_chunk_hash: hashed_chunk}) do
+  def key(%Transformation{expr: expr, original_header: h, original_chunk_hash: hashed_chunk}) do
     key({expr, h, hashed_chunk})
   end
 

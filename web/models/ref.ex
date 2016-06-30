@@ -1,16 +1,14 @@
-defmodule Etlien.Job do
+defmodule Etlien.Ref do
   use Etlien.Web, :model
 
-  schema "jobs" do
-    field :uuid, :string
-    field :name, :string
-    field :description, :string
-    field :schemas, :map
+  schema "refs" do
+    field :ref, :string
+    belongs_to :set, Etlien.Set
 
     timestamps
   end
 
-  @required_fields ~w(uuid name description schemas)
+  @required_fields ~w(ref)
   @optional_fields ~w()
 
   @doc """
@@ -19,7 +17,7 @@ defmodule Etlien.Job do
   If no params are provided, an invalid changeset is returned
   with no validation performed.
   """
-  def changeset(model, params \\ :empty) do
+  def changeset(model, params \\ %{}) do
     model
     |> cast(params, @required_fields, @optional_fields)
   end

@@ -13,6 +13,13 @@ defmodule Etlien.Router do
     plug :accepts, ["json"]
   end
 
+  scope "/api", Etlien do
+    pipe_through :api
+
+    post "/group/:group_id/chunk", Api.Group.Append, :index
+    get "/group/:group_id/chunk", Api.Group.Append, :index
+  end
+
   scope "/", Etlien do
     pipe_through :browser # Use the default browser stack
 

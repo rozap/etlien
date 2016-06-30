@@ -33,10 +33,11 @@ defmodule Etlien.ConnCase do
   end
 
   setup tags do
-    unless tags[:async] do
-      Ecto.Adapters.SQL.restart_test_transaction(Etlien.Repo, [])
-    end
+    :ok = Ecto.Adapters.SQL.Sandbox.checkout(Etlien.Repo)
 
-    {:ok, conn: Phoenix.ConnTest.conn()}
+    unless tags[:async] do
+      Ecto.Adapters.SQL.Sandbox.mode(Etlien.Repo, {:shared, self()})
+    end
+    {:ok, conn: Phoenix.ConnTest.build_conn()}
   end
 end

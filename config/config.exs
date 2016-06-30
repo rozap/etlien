@@ -14,6 +14,8 @@ config :etlien, Etlien.Endpoint,
   pubsub: [name: Etlien.PubSub,
            adapter: Phoenix.PubSub.PG2]
 
+
+config :etlien, ecto_repos: [Etlien.Repo]
 # Configures Elixir's Logger
 config :logger, :console,
   format: "$time $metadata[$level] $message\n",
@@ -28,11 +30,17 @@ config :phoenix, :generators,
   migration: true,
   binary_id: false
 
+config :etlien, :nice,
+  default_timeout: 500
+
 config :etlien, :persist,
   water_mark: 8,
   count: 1,
   max_attempt_timeout: 200,
   path: "/tmp/etlien"
+
+config :etlien, :broker,
+  water_mark: 16
 
 config :etlien, :set,
   water_mark: 8,
@@ -41,3 +49,6 @@ config :etlien, :set,
 
 config :etlien, :applicator,
   store_at_ms: 100
+
+config :etlien, :api,
+  chunk_size_bytes: 1024

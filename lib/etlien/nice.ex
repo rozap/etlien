@@ -44,7 +44,7 @@ defmodule Etlien.Nice do
             # Try the next worker, maybe they will accept it
             Logger.warn("#{inspect worker} says it is at max_capacity")
             {:cont, acc}
-          err -> 
+          err ->
             IO.inspect err
             err
         end
@@ -61,11 +61,15 @@ defmodule Etlien.Nice do
     end
   end
 
+  def cast_for(group_name, payload) do
+    timeout = Application.get_env(:etlien, :nice)[:default_timeout]
+    attempt(group_name, payload, timeout, false, &Workex.push_ack(&1, &2))
+  end
+
+
   def cast_for(group_name, payload, timeout, local_only \\ false) do
     attempt(group_name, payload, timeout, local_only, &Workex.push_ack(&1, &2))
   end
 
-  def call_for(group_name, payload, timeout, local_only \\ false) do
-    attempt(group_name, payload, timeout, local_only, &Workex.push_block(&1, &2))
-  end
+
 end

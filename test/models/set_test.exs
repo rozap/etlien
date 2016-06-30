@@ -1,18 +1,18 @@
-defmodule Etlien.ExprTest do
+defmodule Etlien.SetTest do
   use Etlien.ModelCase
 
-  # alias Etlien.Expr
+  # alias Etlien.Set
 
-  @valid_attrs %{name: "some content", source: %{}}
+  @valid_attrs %{columns: %{}}
   @invalid_attrs %{}
 
   # test "changeset with valid attributes" do
-  #   changeset = Expr.changeset(%Expr{}, @valid_attrs)
+  #   changeset = Set.changeset(%Set{}, @valid_attrs)
   #   assert changeset.valid?
   # end
 
   # test "changeset with invalid attributes" do
-  #   changeset = Expr.changeset(%Expr{}, @invalid_attrs)
+  #   changeset = Set.changeset(%Set{}, @invalid_attrs)
   #   refute changeset.valid?
   # end
 end

@@ -2,7 +2,7 @@ defmodule ApplicatorTest do
   use ExUnit.Case, async: false
   alias Etlien.Persist
   alias Etlien.Transform.Applicator
-  alias Etlien.Transformed
+  alias Etlien.Transform.Transformation
 
   @foobar {:foo, [], [{:bar, [], [:__DATUM__]}]}
 
@@ -25,7 +25,7 @@ defmodule ApplicatorTest do
     header = ["some", "letters", "wow"]
     chunk = [["a"], ["b"], ["c"]]
 
-    t = %Transformed{
+    t = %Transformation{
       expr: expr,
       original_header: header,
       original_chunk_hash: Persist.chunk_hash(chunk),
@@ -46,14 +46,6 @@ defmodule ApplicatorTest do
     header = ["az", "bz", "cz"]
     chunk = [["aa", "bb", "cc"]]
 
-    t = %Transformed{
-      expr: Applicator.identity,
-      original_header: header,
-      original_chunk_hash: Persist.chunk_hash(chunk),
-      result_header: header,
-      result_chunk: chunk
-    }
-
     wrapped_expr = Applicator.wrap(
       expr,
       quote do: fn header, row ->
@@ -70,7 +62,7 @@ defmodule ApplicatorTest do
     header = ["a", "b", "c"]
     chunk = [["aa", "bb", "cc"]]
 
-    t = %Transformed{
+    t = %Transformation{
       expr: Applicator.identity,
       original_header: header,
       original_chunk_hash: Persist.chunk_hash(chunk),
@@ -88,7 +80,7 @@ defmodule ApplicatorTest do
       end)
     )
 
-    {:ok, %Transformed{
+    {:ok, %Transformation{
       result_chunk: result_chunk,
       result_header: result_header
     }} = Applicator.apply_to_chunk(wrapped_expr, {header, chunk})
