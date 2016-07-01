@@ -1,5 +1,5 @@
 defmodule Etlien.Transform.Chunker do
-  alias Etlien.{Persist, Transform, Ref, Repo, Broker}
+  alias Etlien.{Persist, Transform, Ref, Repo, Broker, Set}
 
   def on_chunk(group, set, chunk) do
     result = Transform.identity(set.columns, chunk)
@@ -11,29 +11,35 @@ defmodule Etlien.Transform.Chunker do
     end
   end
 
-  defp fits_in?(set, chunk) do
-    true
-  end
-
-  defp get_or_create_set(group, chunk) do
-    case Enum.find(group.sets, &fits_in?(&1, chunk)) do
+  defp fits_in?(header, {header, _}), do: true
+  defp fits_in?(_, {_, _}), do: false
+    
+  defp get_or_create_set(group, row) do
+    case Enum.find(group.sets, &fits_in?(&1.columns.names, row)) do
       nil ->
-        IO.puts "Creating set for #{inspect chunk}"
-        {group, nil}
+        {names, _} = row
+        set = %Set{
+          group_id: group.id,
+          columns: %{
+            names: names
+          }
+        }
+        group = struct(group, sets: [set | group.sets])
+        {group, set}
       set ->
-        IO.puts "Fits in #{inspect set}"
         {group, set}
     end
   end
 
-  def unflatten(group, stream) do
+  def unflatten(stream, group) do
     group = Repo.preload group, :sets
     Stream.transform(
       stream,
       group,
-      fn chunk, acc ->
-        {group, set} = get_or_create_set(group, chunk)
-        {[{group, set, chunk}], group}
+      fn row, acc_group ->
+        {group, set} = get_or_create_set(acc_group, row)
+        {_, datum} = row
+        {[{set, datum}], group}
       end
     )
   end

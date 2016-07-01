@@ -1,10 +1,9 @@
 defmodule ChunkerTest do
   use ExUnit.Case, async: false
   alias Etlien.Group
-  alias Etlien.Set
-  alias Etlien.Broker
 
   alias Etlien.Repo
+  alias Etlien.Set
   alias Etlien.Transform.Chunker
 
 
@@ -19,39 +18,65 @@ defmodule ChunkerTest do
     :ok
   end
 
-  test "can unflatten a single chunk type" do
-    columns = %{
-      names: ["foo", "bar"],
-      types: [:string, :string]
-    }
-
-
+  test "can unflatten a single chunk stream" do
     group = Repo.insert!(%Group{
       name: "goober"
     })
 
-    Broker.subscribe(group)
+    header = ["foo", "bar"]
 
-    Chunker.unflatten(
-      group,
-      [
-        ["im a foo1", "im a bar1"],
-        ["im a foo2", "im a bar2"],
-        ["im a foo3", "im a bar3"]
-      ]
-    )
-    |> Stream.run
+    result = [
+      {header, ["im a foo1", "im a bar1"]},
+      {header, ["im a foo2", "im a bar2"]},
+      {header, ["im a foo3", "im a bar3"]}
+    ]
+    |> Stream.map(fn i -> i end)
+    |> Chunker.unflatten(group)
+    |> Enum.into([])
 
-    expected_hash = "91D2BC80317695AA0D6365E1BE76758BB1B41B947C0245BE0A743FA3199C4CCF"
+    assert [{
+      %Set{columns: %{names: ["foo", "bar"]}},
+      ["im a foo1", "im a bar1"]
+    },
+    {
+      %Set{columns: %{names: ["foo", "bar"]}},
+      ["im a foo2", "im a bar2"]
+    },
+    {
+      %Set{columns: %{names: ["foo", "bar"]}},
+      ["im a foo3", "im a bar3"]
+    }] = result
+  end
 
-    # receive do
-    #   {:ref_notify, ^group, ^set, ref} ->
-    #     assert ref.ref == expected_hash
-    # after 200 ->
-    #   :error
-    # end
+  test "can unflatten a multi chunk stream" do
+    group = Repo.insert!(%Group{
+      name: "goober"
+    })
 
+    header = ["foo", "bar"]
+    other = ["foo", "qux"]
 
+    result = [
+      {header, ["im a foo1", "im a bar1"]},
+      {other, ["im a foo2", "im a qux"]},
+      {header, ["im a foo3", "im a bar3"]}
+    ]
+    |> Stream.map(fn i -> i end)
+    |> Chunker.unflatten(group)
+    |> Enum.into([])
+
+    assert [{
+      %Set{columns: %{names: ["foo", "bar"]}},
+      ["im a foo1", "im a bar1"]
+    },
+    {
+      %Set{columns: %{names: ["foo", "qux"]}},
+      ["im a foo2", "im a qux"]
+    },
+    {
+      %Set{columns: %{names: ["foo", "bar"]}},
+      ["im a foo3", "im a bar3"]
+    }] = result
   end
 
 
