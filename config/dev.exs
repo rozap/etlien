@@ -13,7 +13,7 @@ config :etlien, Etlien.Endpoint,
   check_origin: false,
   watchers: [
     node: [
-      "node_modules/gulp/bin/gulp.js", "watch"
+      "node_modules/gulp/bin/gulp.js", "watch", cd: Path.expand("../", __DIR__)
     ]
   ]
 

@@ -8,6 +8,8 @@ defmodule Etlien.Broker do
     defstruct groups: %{}
   end
 
+  @notify_tag :ref_notify
+
   def start_link do
     water_mark = Application.get_env(:etlien, :broker)[:water_mark]
     {:ok, pid} = Workex.start_link(__MODULE__, [], max_size: water_mark)
@@ -29,7 +31,7 @@ defmodule Etlien.Broker do
     num = state.groups
     |> Map.get(gid, [])
     |> Enum.reduce(0, fn listener, c ->
-      send listener, {:ref_notify, group, set, ref}
+      send listener, {@notify_tag, {group, set, ref}}
       c + 1
     end)
 
@@ -54,4 +56,6 @@ defmodule Etlien.Broker do
   def subscribe(group) do
     Workex.push(__MODULE__, {:subscribe, group, self})
   end
+
+
 end

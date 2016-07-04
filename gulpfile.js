@@ -56,17 +56,22 @@ var bundler = watchify(browserify(paths.js.app.src, {
 gulp.task('elm-init', elm.init);
 
 gulp.task('elm', ['elm-init'], function() {
+  console.log("-> Compiling elm")
   return gulp.src(paths.elm.src)
     .pipe(elm.bundle('elm-app.js'))
+    .on('error', function(err) {
+      console.error(err.message);
+      this.emit('end');
+    })
     .pipe(gulp.dest(paths.elm.dest));
-  console.log("-> Done compiling elm")
 });
 
 
-gulp.task('app', function() {
+gulp.task('app', ['elm'], function() {
   bundler.bundle()
     .on('error', function(err) {
-      console.error(err);
+      // console.error(err);
+      console.log("fucking shit")
       this.emit('end');
     })
     .pipe(source('app.js'))

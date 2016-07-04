@@ -79,5 +79,59 @@ defmodule ChunkerTest do
     }] = result
   end
 
+  test "can chunk a single stream" do
+    group = Repo.insert!(%Group{
+      name: "goober"
+    })
+
+    header = ["foo", "bar"]
+    result = [
+      {header, ["im a foo1", "im a bar1"]},
+      {header, ["im a foo2", "im a bar2"]},
+      {header, ["im a foo3", "im a bar3"]}
+    ]
+    |> Stream.map(fn i -> i end)
+    |> Chunker.unflatten(group)
+    |> Chunker.chunk(group)
+    |> Enum.into([])
+
+    assert [{
+      %Set{columns: %{names: ["foo", "bar"]}},
+      [
+        ["im a foo3", "im a bar3"],
+        ["im a foo2", "im a bar2"],
+        ["im a foo1", "im a bar1"]]}] = result
+  end
+
+  test "can chunk a double stream" do
+    group = Repo.insert!(%Group{
+      name: "goober"
+    })
+
+    header = ["foo", "bar"]
+    other = ["foo", "qux"]
+
+    result = [
+      {header, ["im a foo1", "im a bar1"]},
+      {other, ["im a foo2", "im a qux"]},
+      {header, ["im a foo3", "im a bar3"]}
+    ]
+    |> Stream.map(fn i -> i end)
+    |> Chunker.unflatten(group)
+    |> Chunker.chunk(group)
+    |> Enum.into([])
+
+    assert [{
+      %Set{columns: %{names: ["foo", "bar"]}},
+      [
+        ["im a foo3", "im a bar3"],
+        ["im a foo1", "im a bar1"]
+      ]
+    }, {
+      %Set{columns: %{names: ["foo", "qux"]}},
+      [["im a foo2", "im a qux"]]
+    }] = result
+  end
+
 
 end

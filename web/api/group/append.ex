@@ -2,8 +2,8 @@ defmodule Etlien.Api.Group.Append do
   import Plug.Conn
   import Ecto.Query
   import Etlien.Api.Util
-  alias Etlien.{Group, Repo}
-  alias Etlien.Resource
+  alias Etlien.{Group, Repo, Resource}
+  alias Etlien.Transform.Chunker
 
   def init(args), do: args
 
@@ -19,6 +19,7 @@ defmodule Etlien.Api.Group.Append do
         conn
         |> Resource.Uploader.stream!
         |> Resource.compose(group.resource_type)
+        |> Chunker.unflatten(group)
 
         json(conn, 201, "thx")
     end
