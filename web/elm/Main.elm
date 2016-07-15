@@ -1,24 +1,22 @@
 import Html exposing (Html, button, div, text, table, tr, td)
 import Html.App as Html
-import Transform
+import Stage
 
 main = Html.beginnerProgram { model = model, view = view, update = update}
 
-type alias Model = List String
+type alias Model = { stages: Stage.Model }
 
-model : { transform: Transform.Model }
-model = []
+model = { stages = [] }
 
 
-type Msg = Add | Remove
+type Action = StageEdit Stage.Edit
 
-update : Msg -> Model -> Model
-update msg model =
-  case msg of
-    Add -> []
-    Remove -> []
+update : Action -> Model -> Model
+update action model =
+  case action of
+    StageEdit edit -> {model | stages = Stage.update edit model.stages}
 
-view: Model -> Html Msg
+view: Model -> Html Action
 view model =
   table [] [
     tr [] [text "hi"],
